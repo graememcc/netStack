@@ -38,5 +38,26 @@ fn parse_args(opts: &[OptGroup], args: &[String]) -> ParseArgsResult {
 
 
 fn main() {
-    println!("Hello, world!")
+    let opts = [
+        optopt("d", "device", "set the cloning device", "<cloning device>"),
+        optflag("h", "help", "print this help"),
+        optopt("i", "interface", "set the interface name", "<interface name>")
+    ];
+
+    let args = os::args();
+    let prog_name = args[0].as_slice();
+
+    match parse_args(opts, args.as_slice()) {
+        HelpRequested => {
+            println!("{}", getopts::usage(format!("{}: A virtual ethernet device creator", prog_name).as_slice(), opts));
+        },
+
+        CommandLineError(e) => {
+            println!("{}", e);
+        },
+
+        DevicesObtained(d) => {
+            println!("Selected {}", d);
+        }
+    };
 }

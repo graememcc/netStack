@@ -4,14 +4,36 @@ use std::os;
 
 
 use device_info::{DefaultDevice, DefaultInterface, UserDefinedDevice, UserDefinedName, DeviceInfo};
+use ioctl::c_file_descriptor;
+
 mod device_info;
 mod ioctl;
+mod common;
+
+
+static MAXLEN: uint = 1514;
 
 
 enum ParseArgsResult {
     HelpRequested,
     DevicesObtained(DeviceInfo),
     CommandLineError(getopts::Fail_)
+}
+
+
+fn listen(fd: &mut c_file_descriptor::CFileDescriptor) {
+    let mut buf: [u8, ..MAXLEN] = [0, ..MAXLEN];
+    loop {
+        match fd.read(buf) {
+            Ok(len) => {
+                if len > 0 && len <= MAXLEN {
+                    println!("{} bytes received!", len);
+                    common::print_byte_table(buf.iter().take(len));
+                }
+            },
+            _ => ()
+        }
+    }
 }
 
 
@@ -59,9 +81,9 @@ fn main() {
 
         DevicesObtained(d) => {
             match ioctl::get_tap_descriptor(&d) {
-                ioctl::FDOpened(fd) => {
+                ioctl::FDOpened(ref mut fd) => {
                     println!("Opened tap device successfully: {}", fd);
-                    std::io::timer::sleep(std::time::duration::Duration::seconds(30));
+                    listen(fd);
                 },
                 err @ _ => {
                     println!("{}", err);

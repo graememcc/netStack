@@ -5,6 +5,7 @@ use std::os;
 
 use device_info::{DefaultDevice, DefaultInterface, UserDefinedDevice, UserDefinedName, DeviceInfo};
 mod device_info;
+mod ioctl;
 
 
 enum ParseArgsResult {
@@ -57,7 +58,15 @@ fn main() {
         },
 
         DevicesObtained(d) => {
-            println!("Selected {}", d);
+            match ioctl::get_tap_descriptor(&d) {
+                ioctl::FDOpened(fd) => {
+                    println!("Opened tap device successfully: {}", fd);
+                    std::io::timer::sleep(std::time::duration::Duration::seconds(30));
+                },
+                err @ _ => {
+                    println!("{}", err);
+                }
+            };
         }
     };
 }

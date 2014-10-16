@@ -3,3 +3,4 @@
 name = "rust_ether1"
 version = "0.0.1"
 authors = ["Graeme McCutcheon <graeme@graememcc.co.uk>"]
+build = "make -C src/ioctl"

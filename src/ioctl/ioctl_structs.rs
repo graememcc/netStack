@@ -49,7 +49,23 @@ impl tap_ifreq {
 
 #[cfg(test)]
 mod test {
-    use super::{tap_ifreq, InterfaceNameTooLong, InterfaceNameTooShort};
+    extern crate libc;
+    use self::libc::c_ulong;
+    use std::mem;
+    use super::{tap_ifreq, InterfaceNameTooLong, InterfaceNameTooShort, IFNAMSIZ, IFF_TAP, IFF_NO_PI};
+
+
+    #[link(name="ioctl_tests")]
+    extern "C" {
+      fn ifr_size() -> c_ulong;
+      fn ifnamesiz() -> c_ulong;
+      fn ifname_offset() -> c_ulong;
+      fn ifname_member_size() -> c_ulong;
+      fn ifr_flags_offset() -> c_ulong;
+      fn ifr_flags_size() -> c_ulong;
+      fn iff_tap() -> c_ulong;
+      fn iff_no_pi() -> c_ulong;
+    }
 
 
     #[test]
@@ -67,5 +83,111 @@ mod test {
             Err(InterfaceNameTooLong) => true,
             _ => false
         });
+    }
+
+
+    #[test]
+    fn struct_is_correct_size() {
+        unsafe {
+            assert!(mem::size_of::<tap_ifreq>() == ifr_size() as uint);
+        }
+    }
+
+
+    #[test]
+    fn ifnamesize_is_correct() {
+        unsafe {
+            assert!(IFNAMSIZ == ifnamesiz() as uint);
+        }
+    }
+
+
+    #[test]
+    fn ifname_offset_is_correct() {
+        match tap_ifreq::new("IFNAME") {
+            Ok(t) => {
+                let base_ptr: *const tap_ifreq = &t;
+                let base = base_ptr.to_uint();
+
+                let name_ptr: *const [u8, ..IFNAMSIZ] = &t.ifr_name;
+
+                unsafe {
+                    assert!(name_ptr.to_uint() - base == ifname_offset() as uint);
+                }
+            },
+
+            _ => {
+                fail!("Failed to create struct to measure memory!");
+            }
+        };
+    }
+
+
+    #[test]
+    fn ifr_name_member_size_is_correct() {
+        match tap_ifreq::new("IFNAME") {
+            Ok(t) => {
+                unsafe {
+                    assert!(mem::size_of_val(&t.ifr_name) == ifname_member_size() as uint);
+                }
+            },
+
+            _ => {
+                fail!("Failed to create struct to measure memory!");
+            }
+        };
+    }
+
+
+    #[test]
+    fn ifr_flags_offset_is_correct() {
+        match tap_ifreq::new("IFNAME") {
+            Ok(t) => {
+                let base_ptr: *const tap_ifreq = &t;
+                let base = base_ptr.to_uint();
+
+                let flags_ptr: *const u16 = &t.ifr_flags;
+
+                unsafe {
+                    assert!(flags_ptr.to_uint() - base == ifr_flags_offset() as uint);
+                }
+            },
+
+            _ => {
+                fail!("Failed to create struct to measure memory!");
+            }
+        };
+    }
+
+
+    #[test]
+    fn ifr_flags_member_size_is_correct() {
+        match tap_ifreq::new("IFNAME") {
+            Ok(t) => {
+                unsafe {
+                    assert!(mem::size_of_val(&t.ifr_flags) == ifr_flags_size() as uint);
+                }
+            },
+
+            _ => {
+                fail!("Failed to create struct to measure memory!");
+            }
+        };
+    }
+
+
+    #[test]
+    fn iff_tap_has_correct_value() {
+        unsafe {
+            assert!(IFF_TAP as uint == iff_tap() as uint);
+        }
+    }
+
+
+    #[test]
+    fn iff_no_pi_has_correct_value() {
+        unsafe {
+            assert!(IFF_NO_PI as uint == iff_no_pi() as uint);
+        }
     }
 }

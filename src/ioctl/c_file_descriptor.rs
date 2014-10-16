@@ -1,5 +1,4 @@
-extern crate libc;
-use self::libc::{c_int, close};
+use super::libc::{c_int, close};
 use std::fmt;
 
 

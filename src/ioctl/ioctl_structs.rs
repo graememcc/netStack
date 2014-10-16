@@ -1,14 +1,9 @@
+pub use super::{InterfaceNameTooLong, InterfaceNameTooShort, GetTapDescriptorResult};
+
 static IFNAMSIZ: uint = 16;
 static PADDINGSIZE: uint = 22;
 static IFF_TAP: u16 = 2;
 static IFF_NO_PI: u16 = 0x1000;
-
-
-// An enum representing the possible results of trying to create a tap_ifreq struct
-pub enum GetTapDescriptorResult {
-    InterfaceNameTooLong,
-    InterfaceNameTooShort
-}
 
 
 // A struct to pass to ioctl to create a new tap device. The only elements of the struct required are the name and
